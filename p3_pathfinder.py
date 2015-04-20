@@ -11,6 +11,7 @@ def find_path(src, dest, mesh):
   visited_boxes = []
   detail_points = {} # [box]: (x,y)
   previous_box = {}
+  distance_from_src = {}
   x_src, y_src = src
   x_dest, y_dest = dest
 
@@ -21,7 +22,7 @@ def find_path(src, dest, mesh):
   priorityQueue = Q.PriorityQueue()
 
   def get_cost(box):
-    distance = get_dist_travelled(box)
+    distance = distance_from_src[box]
     heuristic = get_heuristic (detail_points[box], dest)
     return  distance + heuristic
 
@@ -47,12 +48,17 @@ def find_path(src, dest, mesh):
 
     if src_box and dest_box:
       break
-     
+  
+  if not src_box or not dest_box:
+    print "No Path!"
+    return ([],[]);
 
   detail_points[src_box] = src
   detail_points[dest_box] = dest
   previous_box[src_box] = None
-  priorityQueue.put ( (get_cost(src_box), src_box) )
+
+  distance_from_src[src_box] = 0
+  priorityQueue.put ( (distance_from_src[src_box], src_box) )
 
   while  priorityQueue :
     cost, box =  priorityQueue.get()
@@ -66,20 +72,23 @@ def find_path(src, dest, mesh):
     for adj_box in adj_boxes:
 
       if adj_box not in visited_boxes:
-      
-        previous_box[adj_box] = box
 
         # determine detail point for adj_box
         x_p, y_p = detail_points[box]
         x1, x2, y1, y2 = adj_box
         detail_points[adj_box] = ( min(max(x_p, x1), x2), min(max(y_p, y1), y2) )
+      
+        previous_box[adj_box] = box
+        distance_from_src[adj_box] = get_dist_travelled(adj_box)
+
+        
         visited_boxes.append((adj_box))
         priorityQueue.put( (get_cost(adj_box), adj_box) )
 
 
   if box != dest_box:
     print "No Path!"
-    return ([],[]);
+    return ([],[])
 
   else:
     #print detail_points.values()
